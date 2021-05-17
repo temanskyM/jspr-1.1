@@ -40,8 +40,15 @@ public class Handler implements Runnable {
             }
 
             final var fullPath = parts[1];
-            final var path = fullPath.split("\\?")[0];
-            final Map<String, String> queryParams = getQueryParams(fullPath);
+            String path;
+            Map<String, String> queryParams = new HashMap<>();
+            if (fullPath.split("\\?").length > 1) {
+                path = fullPath.split("\\?")[0];
+                queryParams = getQueryParams(fullPath);
+            } else {
+                path = fullPath;
+            }
+
 
             if (!validPaths.contains(path)) {
                 out.write((
@@ -60,12 +67,18 @@ public class Handler implements Runnable {
             // special case for classic
             if (path.equals("/classic.html")) {
                 var template = Files.readString(filePath);
+
                 template = template.replace(
                         "{time}",
                         LocalDateTime.now().toString());
-                template = template.replace(
-                        "{user}",
-                        queryParams.get("name"));
+
+                if (queryParams.size() > 0) {
+                    if (queryParams.containsKey("name"))
+                        template = template.replace(
+                                "{user}",
+                                queryParams.get("name"));
+                }
+
                 var content = template.getBytes();
 
                 out.write((
